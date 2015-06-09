@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configures the Camel Context-->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:camel="http://camel.apache.org/schema/spring"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+  <camelContext xmlns="http://camel.apache.org/schema/spring">
+    <route>
+        <from uri="jetty:http://0.0.0.0:3232/logserver"/>
+        <log message="in logserver"/>
+        <setHeader headerName="servicetype">
+            <simple>${in.header.servicetype}</simple>
+        </setHeader>
+        <setHeader headerName="tenantid">
+            <simple>${in.header.tenantid}</simple>
+        </setHeader>
+         
+        <setHeader headerName="logmessage">
+            <simple>${in.header.logmessage}</simple>
+        </setHeader>
+
+        <setHeader headerName="requestGUUID">
+            <simple>${in.header.requestuuid}</simple>
+        </setHeader>
+ <choice>
+			    <when>
+				<simple>${in.header.servicetype} == 'polineitem'</simple>
+				 <setHeader headerName="CamelHazelcastoperationType">
+					<constant>put</constant>
+				</setHeader>
+				<camel:setHeader headerName="CamelHazelcastObjectId">
+				    <simple>${in.header.tenantid}-${in.header.requestGUUID}</simple>
+				</camel:setHeader>
+				
+				<transform>
+				    <simple>&lt;message&gt;
+&lt;servicetype&gt;${in.header.servicetype}&lt;/servicetype&gt;
+&lt;tenantid&gt;${in.header.tenantid}&lt;/tenantid&gt;
+&lt;logmessage&gt;${in.header.logmessage}&lt;/logmessage&gt;
+&lt;requestGUUID&gt;${in.header.requestGUUID}&lt;/requestGUUID&gt;
+&lt;/message&gt;
+				    </simple>
+				</transform>				
+				
+				<to uri="hazelcast:multimap:polineitem" />
+				<log message="${in.body}"/>
+			    </when>
+
+			    <when>
+				<simple>${in.header.servicetype} == 'inventory'</simple>
+ 				<setHeader headerName="CamelHazelcastoperationType">
+					<constant>put</constant>
+				</setHeader>
+				<camel:setHeader headerName="CamelHazelcastObjectId">
+				    <simple>${in.header.tenantid}-${in.header.requestGUUID}</simple>
+				</camel:setHeader>
+				<transform>
+				     <simple>&lt;message&gt;
+&lt;servicetype&gt;${in.header.servicetype}&lt;/servicetype&gt;
+&lt;tenantid&gt;${in.header.tenantid}&lt;/tenantid&gt;
+&lt;logmessage&gt;${in.header.logmessage}&lt;/logmessage&gt;
+&lt;requestGUUID&gt;${in.header.requestGUUID}&lt;/requestGUUID&gt;
+&lt;/message&gt;
+				    </simple>
+				</transform>				
+				
+				<to uri="hazelcast:multimap:inventory" />
+				<log message="${in.body}"/>
+			    </when>
+
+			    <when>
+				<simple>${in.header.servicetype} == 'ship_Outbound'</simple>
+ 				<setHeader headerName="CamelHazelcastoperationType">
+					<constant>put</constant>
+				</setHeader>
+				<camel:setHeader headerName="CamelHazelcastObjectId">
+				    <simple>${in.header.tenantid}-${in.header.requestGUUID}</simple>
+				</camel:setHeader>
+				<transform>
+				     <simple>&lt;message&gt;
+&lt;servicetype&gt;${in.header.servicetype}&lt;/servicetype&gt;
+&lt;tenantid&gt;${in.header.tenantid}&lt;/tenantid&gt;
+&lt;logmessage&gt;${in.header.logmessage}&lt;/logmessage&gt;
+&lt;requestGUUID&gt;${in.header.requestGUUID}&lt;/requestGUUID&gt;
+&lt;/message&gt;
+				    </simple>
+				</transform>				
+				
+				<to uri="hazelcast:multimap:shipoutbound" />
+				<log message="${in.body}"/>
+			    </when>
+		
+				
+			    <otherwise>
+				<log message="failure"/>
+			    </otherwise>
+			</choice>
+    </route>
+
+<route id="polineitem">
+			<from uri="hazelcast:multimap:polineitem" />
+			<setHeader headerName="CamelHazelcastoperationType">
+				<constant>poll</constant>
+			</setHeader>
+			<convertBodyTo type="org.w3c.dom.Document"/>
+			<setHeader headerName="tenantid">
+				<xpath>/message/tenantid/text()</xpath>
+			</setHeader>
+			<setHeader headerName="servicetype">
+				<xpath>/message/servicetype/text()</xpath>
+			</setHeader>
+			<setHeader headerName="logmessage">
+				<xpath>/message/logmessage/text()</xpath>
+			</setHeader>
+			<setHeader headerName="table">
+				<constant>billing</constant>
+			</setHeader>
+        <setHeader headerName="CamelHBaseRowId">
+            <description>Set the HBase Row</description>
+            <constant>row1</constant>
+        </setHeader>
+
+    <setHeader headerName="CamelHBaseFamily">
+        <constant>cf</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseQualifier">
+        <constant>servicetype</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseValue">
+        <simple>${in.header.servicetype}</simple>
+    </setHeader>
+         <setHeader headerName="CamelHBaseRowId2">
+            <constant>row1</constant>
+        </setHeader>
+
+    <setHeader headerName="CamelHBaseFamily2">
+        <constant>cf</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseQualifier2">
+        <constant>tenantid</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseValue2">
+        <simple>${in.header.tenantid}</simple>
+    </setHeader>
+         <setHeader headerName="CamelHBaseRowId3">
+             <constant>row1</constant>
+        </setHeader>
+
+    <setHeader headerName="CamelHBaseFamily3">
+        <constant>cf</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseQualifier3">
+        <constant>logmessage</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseValue3">
+        <simple>${in.header.logmessage}</simple>
+    </setHeader>
+       <!-- <to uri="hbase:test?operation=CamelHBasePut"/>-->
+   <log message="success"/>
+
+			
+		 </route>
+
+		<route id="inventory">
+			<from uri="hazelcast:queue:inventory" />
+			<setHeader headerName="CamelHazelcastoperationType">
+				<constant>poll</constant>
+			</setHeader>
+			<convertBodyTo type="org.w3c.dom.Document"/>
+			<setHeader headerName="tenantid">
+				<xpath>/message/tenantid/text()</xpath>
+			</setHeader>
+			<setHeader headerName="servicetype">
+				<xpath>/message/servicetype/text()</xpath>
+			</setHeader>
+			<setHeader headerName="logmessage">
+				<xpath>/message/logmessage/text()</xpath>
+			</setHeader>
+
+        <setHeader headerName="CamelHBaseRowId">
+            <description>Set the HBase Row</description>
+            <constant>row1</constant>
+        </setHeader>
+
+    <setHeader headerName="CamelHBaseFamily">
+        <constant>cf</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseQualifier">
+        <constant>servicetype</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseValue">
+        <simple>${in.header.servicetype}</simple>
+    </setHeader>
+         <setHeader headerName="CamelHBaseRowId2">
+            <constant>row1</constant>
+        </setHeader>
+
+    <setHeader headerName="CamelHBaseFamily2">
+        <constant>cf</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseQualifier2">
+        <constant>tenantid</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseValue2">
+        <simple>${in.header.tenantid}</simple>
+    </setHeader>
+         <setHeader headerName="CamelHBaseRowId3">
+             <constant>row1</constant>
+        </setHeader>
+
+    <setHeader headerName="CamelHBaseFamily3">
+        <constant>cf</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseQualifier3">
+        <constant>logmessage</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseValue3">
+        <simple>${in.header.logmessage}</simple>
+    </setHeader>
+       <!-- <to uri="hbase:test?operation=CamelHBasePut"/>-->
+
+			
+
+		 </route>
+
+		<route id="shipoutbound">
+			<from uri="hazelcast:queue:shipoutbound" />
+			<setHeader headerName="CamelHazelcastoperationType">
+				<constant>poll</constant>
+			</setHeader>
+			<convertBodyTo type="org.w3c.dom.Document"/>
+			<setHeader headerName="tenantid">
+				<xpath>/message/tenantid/text()</xpath>
+			</setHeader>
+			<setHeader headerName="servicetype">
+				<xpath>/message/servicetype/text()</xpath>
+			</setHeader>
+			<setHeader headerName="logmessage">
+				<xpath>/message/logmessage/text()</xpath>
+			</setHeader>
+
+        <setHeader headerName="CamelHBaseRowId">
+            <description>Set the HBase Row</description>
+            <constant>row1</constant>
+        </setHeader>
+
+    <setHeader headerName="CamelHBaseFamily">
+        <constant>cf</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseQualifier">
+        <constant>servicetype</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseValue">
+        <simple>${in.header.servicetype}</simple>
+    </setHeader>
+         <setHeader headerName="CamelHBaseRowId2">
+            <constant>row1</constant>
+        </setHeader>
+
+    <setHeader headerName="CamelHBaseFamily2">
+        <constant>cf</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseQualifier2">
+        <constant>tenantid</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseValue2">
+        <simple>${in.header.tenantid}</simple>
+    </setHeader>
+         <setHeader headerName="CamelHBaseRowId3">
+             <constant>row1</constant>
+        </setHeader>
+
+    <setHeader headerName="CamelHBaseFamily3">
+        <constant>cf</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseQualifier3">
+        <constant>logmessage</constant>
+    </setHeader>
+    <setHeader headerName="CamelHBaseValue3">
+        <simple>${in.header.logmessage}</simple>
+    </setHeader>
+       <!-- <to uri="hbase:test?operation=CamelHBasePut"/>-->
+		 </route>
+</camelContext>
+
+</beans>
