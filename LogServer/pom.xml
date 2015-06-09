@@ -78,11 +78,6 @@
       <version>2.15.2</version>
     </dependency>
 <dependency>
-      <groupId>org.apache.camel</groupId>
-      <artifactId>camel-blueprint</artifactId>
-      <version>2.15.2</version>
-    </dependency>
-<dependency>
     <groupId>org.apache.camel</groupId>
     <artifactId>camel-hazelcast</artifactId>
     <version>2.15.2</version>
@@ -98,7 +93,7 @@
     <!-- jetty -->
 <dependency>
     <groupId>org.apache.camel</groupId>
-    <artifactId>camel-https</artifactId>
+    <artifactId>camel-http4</artifactId>
     <version>2.15.2</version>
     <!-- use the same version as your Camel core version -->
 </dependency>
