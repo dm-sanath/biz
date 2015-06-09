@@ -1,9 +1,11 @@
-Camel Router Spring Project
+   Camel Router Spring Project
 ===========================
+
+
 
 To build this project use
 
-    mvn install
+    mvn clean install
 
 To run this example either embed the jar inside Spring
 or to run the route from within Maven try
